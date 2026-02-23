@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Only For You</title>
+
+  <style>
+    :root { color-scheme: dark; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      background:#000;
+      color:#fff;
+      overflow:hidden;
+      font-family: ui-serif, "New York", "Georgia", serif;
+    }
+
+    /* Subtle moving grain overlay */
+    .grain{
+      pointer-events:none;
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+      opacity:.10;
+      mix-blend-mode: overlay;
+      animation: drift 10s linear infinite;
+      transform: translate3d(0,0,0);
+    }
+    @keyframes drift{
+      0%{ transform: translate3d(0,0,0); }
+      100%{ transform: translate3d(-60px,40px,0); }
+    }
+
+    /* Slow “world” glow */
+    .world{
+      position:fixed; inset:-20%;
+      background:
+        radial-gradient(closest-side at 30% 30%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(closest-side at 70% 60%, rgba(255,255,255,.07), transparent 60%),
+        radial-gradient(closest-side at 50% 80%, rgba(255,255,255,.06), transparent 60%);
+      filter: blur(30px);
+      animation: breathe 9s ease-in-out infinite;
+      opacity: .9;
+    }
+    @keyframes breathe{
+      0%,100%{ transform: scale(1.00) translateY(0); }
+      50%{ transform: scale(1.05) translateY(-10px); }
+    }
+
+    .stage{
+      position:relative;
+      height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+
+    /* Blurred glass card */
+    .card{
+      width:min(820px,92vw);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:26px;
+      background: rgba(0,0,0,.40);
+      box-shadow: 0 30px 90px rgba(0,0,0,.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 30px 26px;
+      text-align:center;
+    }
+
+    .title{
+      font-size: 44px;
+      letter-spacing: .6px;
+      margin: 0 0 10px;
+    }
+    .subtitle{
+      margin: 0 0 22px;
+      opacity:.78;
+      line-height:1.6;
+      font-size: 16px;
+    }
+
+    .btn{
+      border:1px solid rgba(255,255,255,.75);
+      background: transparent;
+      color:#fff;
+      padding: 12px 20px;
+      border-radius: 14px;
+      cursor:pointer;
+      letter-spacing: 1px;
+      font-size: 15px;
+    }
+    .btn:hover{
+      background:#fff;
+      color:#000;
+      transition:.22s;
+    }
+
+    /* Cinematic intro */
+    .intro{
+      position:fixed; inset:0;
+      display:grid;
+      place-items:center;
+      background:#000;
+      z-index: 50;
+      transition: opacity 1.2s ease;
+    }
+    .intro.fade{ opacity:0; pointer-events:none; }
+    .introText{
+      width:min(760px,92vw);
+      opacity:.0;
+      transform: translateY(8px);
+      transition: opacity 1.2s ease, transform 1.2s ease;
+      line-height: 1.7;
+      letter-spacing:.2px;
+    }
+    .introText.show{ opacity:.85; transform: translateY(0); }
+    .introText strong{ opacity: 1; }
+
+    /* Reveal sequence */
+    #reveal{
+      display:none;
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity 1.2s ease, transform 1.2s ease;
+      margin-top: 18px;
+    }
+    #reveal.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+
+    img{
+      max-width: 90vw;
+      max-height: 64vh;
+      object-fit: contain;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      margin-top: 10px;
+    }
+
+    .fine{
+      margin-top: 12px;
+      opacity:.62;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="world"></div>
+  <div class="grain"></div>
+
+  <!-- Intro overlay -->
+  <div class="intro" id="intro">
+    <div class="introText" id="introText">
+      <div style="font-size:16px; opacity:.72; margin-bottom:10px;">A private world.</div>
+      <div style="font-size:28px; opacity:.92;">
+        If you opened this, you’re already inside it.
+      </div>
+      <div style="margin-top:14px; opacity:.78;">
+        <strong>Rules:</strong> alone, quiet, no scrolling away.
+      </div>
+      <div class="fine">Tap anywhere to continue.</div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <h1 class="title">Only For You.</h1>
+      <p class="subtitle">Open this alone. Then press enter.</p>
+
+      <button class="btn" id="enterBtn">ENTER THE VAULT</button>
+
+      <audio id="music" loop>
+        <source src="music.mp3" type="audio/mpeg">
+      </audio>
+
+      <div id="reveal">
+        <p style="margin:0; opacity:.85;"><strong>Kumbaraj</strong> — your surprise.</p>
+        <img src="surprise.jpg" alt="Surprise">
+        <div class="fine">Next: you add something for me.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const intro = document.getElementById("intro");
+    const introText = document.getElementById("introText");
+    const enterBtn = document.getElementById("enterBtn");
+    const reveal = document.getElementById("reveal");
+    const music = document.getElementById("music");
+
+    // Show intro text with a tiny delay
+    setTimeout(() => introText.classList.add("show"), 120);
+
+    // Tap anywhere to dismiss intro (no accounts, one-click vibe)
+    intro.addEventListener("click", () => {
+      intro.classList.add("fade");
+      setTimeout(() => intro.remove(), 1400);
+    });
+
+    async function enterVault(){
+      // Music starts after user action (browser policy)
+      try { await music.play(); } catch(e) {}
+      reveal.style.display = "block";
+      setTimeout(() => reveal.classList.add("show"), 80);
+    }
+
+    enterBtn.addEventListener("click", enterVault);
+  </script>
+</body>
+</html>
